@@ -1,5 +1,6 @@
 # Import the QueryBase class
-from python-package.employee_events.query_base import QueryBase
+from employee_events.query_base import QueryBase
+
 
 # Import dependencies needed for sql execution
 # from the `sql_execution` module
