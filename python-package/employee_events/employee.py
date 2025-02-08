@@ -1,48 +1,30 @@
 # Import the QueryBase class
 from employee_events.query_base import QueryBase
 
-
-# Import dependencies needed for sql execution
+# Import dependencies needed for SQL execution
 # from the `sql_execution` module
-from python-package.employee_events.sql_execution import QueryMixin
+from employee_events.sql_execution import QueryMixin
 import pandas as pd
 
-# Define a subclass of QueryBase
-# called Employee
+# Define a subclass of QueryBase called Employee
 class Employee(QueryBase):
-    # Set the class attribute `name`
-    # to the string "employee"
+    # Set the class attribute `name` to the string "employee"
     name = "employee"
 
-    # Define a method called `names`
-    # that receives no arguments
-    # This method should return a list of tuples
-    # from an sql execution
+    # Define a method called `names` that receives no arguments
+    # This method should return a list of tuples from an SQL execution
     def names(self):
-        # Query 3
-        # Write an SQL query
-        # that selects two columns 
-        # 1. The employee's full name
-        # 2. The employee's id
-        # This query should return the data
-        # for all employees in the database
+        # Query 3: Retrieve employees' full names and IDs
         query = """
             SELECT first_name || ' ' || last_name AS full_name, employee_id
             FROM employee;
         """
         return self.query(query)
 
-    # Define a method called `username`
-    # that receives an `id` argument
-    # This method should return a list of tuples
-    # from an sql execution
+    # Define a method called `username` that receives an `id` argument
+    # This method should return a list of tuples from an SQL execution
     def username(self, id):
-        # Query 4
-        # Write an SQL query
-        # that selects an employees full name
-        # Use f-string formatting and a WHERE filter
-        # to only return the full name of the employee
-        # with an id equal to the id argument
+        # Query 4: Retrieve a specific employee's full name
         query = f"""
             SELECT first_name || ' ' || last_name AS full_name
             FROM employee
@@ -50,13 +32,8 @@ class Employee(QueryBase):
         """
         return self.query(query)
 
-    # Below is a method with an SQL query
-    # This SQL query generates the data needed for
-    # the machine learning model.
-    # Without editing the query, alter this method
-    # so when it is called, a pandas dataframe
-    # is returned containing the execution of
-    # the sql query
+    # Define a method called `model_data` that retrieves
+    # data for machine learning model predictions
     def model_data(self, id):
         query = f"""
             SELECT SUM(positive_events) AS positive_events,
