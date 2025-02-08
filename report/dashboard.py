@@ -82,6 +82,8 @@ class BarChart(MatplotlibViz):
 # called Visualizations       
 class Visualizations(CombinedComponent):
     children = [LineChart(), BarChart()]
+    from fasthtml.common import Div
+
     outer_div_type = Div(cls='grid')
 
 
@@ -114,7 +116,7 @@ class DashboardFilters(FormGroup):
 # called `Report`
 class Report(CombinedComponent):
     children = [Header(), DashboardFilters(), Visualizations(), NotesTable()]
-    outer_div_type = Div(cls='container')
+        outer_div_type = Div(cls='container')
 
 
 # Initialize a fasthtml app 
