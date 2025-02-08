@@ -1,46 +1,55 @@
-# Import dependencies for SQL execution
-from employee_events.sql_execution import QueryMixin
-import pandas as pd
-
+# Import any dependencies needed to execute sql queries
+# YOUR CODE HERE
+from .sql_execution import QueryMixin
 # Define a class called QueryBase
-# Use inheritance to add methods for querying the database
-class QueryBase(QueryMixin):
 
-    # Create a class attribute called `name`
-    # Set the attribute to an empty string
+
+
+class QueryBase:
     name = ""
+    # Create a class attribute called `name`
+    # set the attribute to an empty string
+    # YOUR CODE HERE
 
-    # Define a `names` method that receives no arguments
+    # Define a `names` method that receives
+    # no passed arguments
+    # YOUR CODE HERE
     def names(self):
-        """Returns an empty list (To be overridden by subclasses)"""
         return []
+        # Return an empty list
+        # YOUR CODE HERE
 
-    # Define an `event_counts` method that receives an `id` argument
+
+    # Define an `event_counts` method
+    # that receives an `id` argument
     # This method should return a pandas dataframe
+    # YOUR CODE HERE
     def event_counts(self, id):
-        """Returns event counts grouped by date"""
         query = f"""
-            SELECT event_date AS date, 
-                   SUM(positive_events) AS positive_events, 
-                   SUM(negative_events) AS negative_events
-            FROM {self.name}
-            JOIN employee_events
-                USING({self.name}_id)
-            WHERE {self.name}.{self.name}_id = {id}
-            GROUP BY event_date
-            ORDER BY event_date;
+        SELECT event_date, 
+               SUM(positive_events) as total_positive_events, 
+               SUM(negative_events) as total_negative_events
+        FROM employee_events
+        WHERE {self.name}_id = {id}
+        GROUP BY event_date
+        ORDER BY event_date
         """
-        return self.pandas_query(query)
+        return QueryMixin().pandas_query(query)
+    
 
     # Define a `notes` method that receives an id argument
     # This function should return a pandas dataframe
+    # YOUR CODE HERE
     def notes(self, id):
-        """Returns notes for the given entity"""
         query = f"""
-            SELECT note_date, note
-            FROM notes
-            JOIN {self.name}
-                USING({self.name}_id)
-            WHERE {self.name}.{self.name}_id = {id};
+        select note_date, note from notes
+        where {self.name}_id = {id}
         """
-        return self.pandas_query(query)
+        # QUERY 2
+        # Write an SQL query that returns `note_date`, and `note`
+        # from the `notes` table
+        # Set the joined table names and id columns
+        # with f-string formatting
+        # so the query returns the notes
+        # for the table name in the `name` class attribute
+        return QueryMixin().pandas_query(query)
