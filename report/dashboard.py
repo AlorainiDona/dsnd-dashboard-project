@@ -12,7 +12,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 sys.path.insert(0, BASE_DIR)
 TEMPLATES_DIR = os.path.join(BASE_DIR, "report", "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "report", "static")
-from python_package.employee_events import Employee, Team
+from python-package.employee_events import Employee, Team
 
 from utils import load_model
 import pandas as pd
