@@ -2,9 +2,9 @@ from fasthtml.common import *
 import matplotlib.pyplot as plt
 
 # Import QueryBase, Employee, Team from employee_events
-from python-package.employee_events.query_base import QueryBase
-from python-package.employee_events.employee import Employee
-from python-package.employee_events.team import Team
+from employee_events.query_base import QueryBase
+from employee_events.employee import Employee
+from employee_events.team import Team
 
 # Import the load_model function from the utils.py file
 from report.utils import load_model
