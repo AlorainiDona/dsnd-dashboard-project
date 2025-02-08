@@ -50,17 +50,34 @@ class Header(BaseComponent):
 class LineChart(MatplotlibViz):
     def visualization(self, entity_id, model):
         data = model.event_counts(entity_id)
-        print("DEBUG: data columns in LineChart", data.columns)  # Debugging line
-        data.fillna(0, inplace=True)
+        
+        # Debugging print
+        print("DEBUG: data columns in LineChart", data.columns)
+
+        # Ensure correct column names
         if "event_date" in data.columns:
-            data.rename(columns={"event_date": "date"}, inplace=True)  # Ensure proper column name
+            data.rename(columns={"event_date": "date"}, inplace=True)
+
+        data.fillna(0, inplace=True)
+
+        if "date" not in data.columns:
+            print("WARNING: 'date' column is missing in the data!")
+            return plt.figure()
+
         data.set_index("date", inplace=True)
         data.sort_index(inplace=True)
         data = data.cumsum()
-        data.columns = ["Positive", "Negative"]
+
+        # Ensure column names are valid
+        if data.shape[1] >= 2:
+            data.columns = ["Positive", "Negative"]
+        else:
+            print("WARNING: Not enough columns for event trends visualization!")
+            return plt.figure()
+
         fig, ax = plt.subplots()
         data.plot(ax=ax)
-        self.set_axis_styling(ax)  # Removed unsupported keyword arguments
+        self.set_axis_styling(ax)  # Fixed unsupported keyword arguments
         ax.set_title("Event Trends")
         ax.set_xlabel("Date")
         ax.set_ylabel("Count")
@@ -74,8 +91,14 @@ class BarChart(MatplotlibViz):
 
     def visualization(self, entity_id, model):
         data = model.model_data(entity_id)
+
+        if data.empty:
+            print("WARNING: model_data is empty, returning blank plot.")
+            return plt.figure()
+
         probas = self.predictor.predict_proba(data)
         pred = probas[:, 1].mean() if model.name == "team" else probas[0, 1]
+        
         fig, ax = plt.subplots()
         ax.barh([""], [pred])
         ax.set_xlim(0, 1)
@@ -148,25 +171,26 @@ def team(team_id: str):
 
 
 # Keep the below code unchanged!
-@app.get("/update_dropdown{r}")
-def update_dropdown(r):
+@app.get("/update_dropdown")
+def update_dropdown(profile_type: str):
     dropdown = DashboardFilters.children[1]
-    print("PARAM", r.query_params["profile_type"])
-    if r.query_params["profile_type"] == "Team":
+    print("PARAM", profile_type)
+    if profile_type == "Team":
         return dropdown(None, Team())
-    elif r.query_params["profile_type"] == "Employee":
+    elif profile_type == "Employee":
         return dropdown(None, Employee())
 
 
 @app.post("/update_data")
 async def update_data(r):
     data = await r.form()
-    profile_type = data._dict["profile_type"]
-    id = data._dict["user-selection"]
+    profile_type = data.get("profile_type", "")
+    entity_id = data.get("user-selection", "")
+
     if profile_type == "Employee":
-        return RedirectResponse(f"/employee/{id}", status_code=303)
+        return RedirectResponse(f"/employee/{entity_id}", status_code=303)
     elif profile_type == "Team":
-        return RedirectResponse(f"/team/{id}", status_code=303)
+        return RedirectResponse(f"/team/{entity_id}", status_code=303)
 
 
 # Start FastAPI server
