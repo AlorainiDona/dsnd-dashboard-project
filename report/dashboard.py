@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 import matplotlib.pyplot as plt
+from fasthtml.common import Div, RedirectResponse
 
 # Import QueryBase, Employee, Team from employee_events
 from employee_events.query_base import QueryBase
@@ -19,10 +20,12 @@ from base_components import (
     Radio,
     MatplotlibViz,
     DataTable
-    )
+)
 
 from combined_components import FormGroup, CombinedComponent
 
+# Initialize FastAPI app
+app = FastAPI()
 
 # Create a subclass of base_components/dropdown
 # called `ReportDropdown`
@@ -82,8 +85,6 @@ class BarChart(MatplotlibViz):
 # called Visualizations       
 class Visualizations(CombinedComponent):
     children = [LineChart(), BarChart()]
-    from fasthtml.common import Div
-
     outer_div_type = Div(cls='grid')
 
 
@@ -105,24 +106,20 @@ class DashboardFilters(FormGroup):
             name='profile_type',
             hx_get='/update_dropdown',
             hx_target='#selector'
-            ),
+        ),
         ReportDropdown(
             id="selector",
-            name="user-selection")
-        ]
-    
+            name="user-selection"
+        )
+    ]
+
 
 # Create a subclass of CombinedComponents
 # called `Report`
 class Report(CombinedComponent):
     children = [Header(), DashboardFilters(), Visualizations(), NotesTable()]
-        outer_div_type = Div(cls='container')
+    outer_div_type = Div(cls='container')
 
-
-# Initialize a fasthtml app 
-from fastapi import FastAPI
-
-app = FastAPI()
 
 # Initialize the `Report` class
 report = Report()
@@ -130,46 +127,46 @@ report = Report()
 
 # Create a route for a get request
 # Set the route's path to the root
-@app.get('/')
+@app.get("/")
 def index():
     return report(1, Employee())
 
 
 # Create a route for a get request
-@app.get('/employee/{employee_id}')
+@app.get("/employee/{employee_id}")
 def employee(employee_id: str):
     return report(employee_id, Employee())
 
 
 # Create a route for a get request
-@app.get('/team/{team_id}')
+@app.get("/team/{team_id}")
 def team(team_id: str):
     return report(team_id, Team())
 
 
 # Keep the below code unchanged!
-@app.get('/update_dropdown{r}')
+@app.get("/update_dropdown{r}")
 def update_dropdown(r):
     dropdown = DashboardFilters.children[1]
-    print('PARAM', r.query_params['profile_type'])
-    if r.query_params['profile_type'] == 'Team':
+    print("PARAM", r.query_params["profile_type"])
+    if r.query_params["profile_type"] == "Team":
         return dropdown(None, Team())
-    elif r.query_params['profile_type'] == 'Employee':
+    elif r.query_params["profile_type"] == "Employee":
         return dropdown(None, Employee())
 
 
-@app.post('/update_data')
+@app.post("/update_data")
 async def update_data(r):
-    from fasthtml.common import RedirectResponse
     data = await r.form()
-    profile_type = data._dict['profile_type']
-    id = data._dict['user-selection']
-    if profile_type == 'Employee':
+    profile_type = data._dict["profile_type"]
+    id = data._dict["user-selection"]
+    if profile_type == "Employee":
         return RedirectResponse(f"/employee/{id}", status_code=303)
-    elif profile_type == 'Team':
+    elif profile_type == "Team":
         return RedirectResponse(f"/team/{id}", status_code=303)
-    
 
+
+# Start FastAPI server
 import uvicorn
 
 if __name__ == "__main__":
