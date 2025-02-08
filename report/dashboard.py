@@ -1,6 +1,7 @@
 from fasthtml.common import *
 import matplotlib.pyplot as plt
-from fasthtml.common import App
+from fastapi import FastAPI
+
 
 
 
@@ -26,7 +27,7 @@ from base_components import (
 
 from combined_components import FormGroup, CombinedComponent
 
-
+app = FastAPI()
 # Create a subclass of base_components/dropdown
 # called `ReportDropdown`
 class ReportDropdown(Dropdown):
@@ -168,5 +169,6 @@ async def update_data(r):
     elif profile_type == 'Team':
         return RedirectResponse(f"/team/{id}", status_code=303)
     
-
-serve()
+import uvicorn
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
