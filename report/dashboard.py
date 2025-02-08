@@ -1,3 +1,4 @@
+from fasthtml.common import H1, RedirectResponse, Div
 from fastapi import FastAPI
 import matplotlib.pyplot as plt
 from fasthtml.common import Div, RedirectResponse
