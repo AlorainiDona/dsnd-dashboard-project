@@ -57,7 +57,7 @@ class LineChart(MatplotlibViz):
         data.columns = ["Positive", "Negative"]
         fig, ax = plt.subplots()
         data.plot(ax=ax)
-        self.set_axis_styling(ax, border_color="black", font_color="black")
+        self.set_axis_styling(ax)  # ✅ Removed unsupported arguments
         ax.set_title("Event Trends")
         ax.set_xlabel("Date")
         ax.set_ylabel("Count")
@@ -77,7 +77,7 @@ class BarChart(MatplotlibViz):
         ax.barh([""], [pred])
         ax.set_xlim(0, 1)
         ax.set_title("Predicted Recruitment Risk", fontsize=20)
-        self.set_axis_styling(ax)
+        self.set_axis_styling(ax)  # ✅ Removed unsupported arguments
         return fig
 
 
