@@ -1,5 +1,6 @@
 # Import dependencies for SQL execution
-from python-package.employee_events.sql_execution import QueryMixin
+from employee_events.sql_execution import QueryMixin
+
 import pandas as pd
 
 # Define a class called QueryBase
