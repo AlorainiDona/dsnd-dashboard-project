@@ -1,55 +1,85 @@
-# Import any dependencies needed to execute sql queries
-# YOUR CODE HERE
+import pandas as pd
 from .sql_execution import QueryMixin
-# Define a class called QueryBase
 
+class QueryBase(QueryMixin):
+    """
+    Base class for executing SQL queries related to employee or team data.
 
+    Attributes:
+    ----------
+    name : str
+        Name of the table associated with the query.
+    db_path : str
+        Path to the SQLite database.
+    """
 
-class QueryBase:
     name = ""
-    # Create a class attribute called `name`
-    # set the attribute to an empty string
-    # YOUR CODE HERE
 
-    # Define a `names` method that receives
-    # no passed arguments
-    # YOUR CODE HERE
-    def names(self):
+    @staticmethod
+    def names() -> list:
+        """
+        Returns a list of names associated with the class.
+
+        Returns:
+        -------
+        list
+            An empty list as the default implementation.
+        """
         return []
-        # Return an empty list
-        # YOUR CODE HERE
 
+    def event_counts(self, id: int) -> pd.DataFrame:
+        """
+        Retrieves the total positive and negative events grouped by date for a specific ID.
 
-    # Define an `event_counts` method
-    # that receives an `id` argument
-    # This method should return a pandas dataframe
-    # YOUR CODE HERE
-    def event_counts(self, id):
-        query = f"""
-        SELECT event_date, 
-               SUM(positive_events) as total_positive_events, 
-               SUM(negative_events) as total_negative_events
+        Parameters:
+        ----------
+        id : int
+            The unique identifier for the employee or team.
+
+        Returns:
+        -------
+        pandas.DataFrame
+            A DataFrame containing `event_date`, `total_positive_events`, and `total_negative_events`.
+            Returns an empty DataFrame if no data is found.
+        """
+        table_column = f"{self.name}_id"  # Dynamically determine the column (employee_id or team_id)
+        sql_query = f"""
+        SELECT event_date,
+            SUM(positive_events) AS total_positive_events,
+            SUM(negative_events) AS total_negative_events
         FROM employee_events
-        WHERE {self.name}_id = {id}
+        WHERE {table_column} = ?
         GROUP BY event_date
-        ORDER BY event_date
+        ORDER BY event_date;
         """
-        return QueryMixin().pandas_query(query)
-    
+        df = self.pandas_query(sql_query, [id])
+        if df.empty:
+            return pd.DataFrame(columns=["event_date", "total_positive_events", "total_negative_events"])
+        return df
 
-    # Define a `notes` method that receives an id argument
-    # This function should return a pandas dataframe
-    # YOUR CODE HERE
-    def notes(self, id):
-        query = f"""
-        select note_date, note from notes
-        where {self.name}_id = {id}
+
+    def notes(self, id: int) -> pd.DataFrame:
         """
-        # QUERY 2
-        # Write an SQL query that returns `note_date`, and `note`
-        # from the `notes` table
-        # Set the joined table names and id columns
-        # with f-string formatting
-        # so the query returns the notes
-        # for the table name in the `name` class attribute
-        return QueryMixin().pandas_query(query)
+        Retrieves notes associated with a specific ID, ordered by date.
+
+        Parameters:
+        ----------
+        id : int
+            The unique identifier for the employee or team.
+
+        Returns:
+        -------
+        pandas.DataFrame
+            A DataFrame containing `note_date` and `note`.
+            Returns an empty DataFrame if no data is found.
+        """
+        sql_query = f"""
+        SELECT note_date, note
+        FROM notes
+        WHERE {self.name}_id = ?
+        ORDER BY note_date;
+        """
+        df = self.pandas_query(sql_query, [id])
+        if df.empty:
+            return pd.DataFrame(columns=["note_date", "note"])
+        return df

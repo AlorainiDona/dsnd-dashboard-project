@@ -1,79 +1,123 @@
 
-# Import the QueryBase class
-# YOUR CODE HERE
-from .sql_execution import QueryMixin
 from .query_base import QueryBase
+from .sql_execution import QueryMixin
+import pandas as pd
 
-# Create a subclass of QueryBase
-# called  `Team`
-#### YOUR CODE HERE
+
 class Team(QueryBase, QueryMixin):
+    """
+    A class for querying team-related data.
 
-    # Set the class attribute `name`
-    # to the string "team"
-    #### YOUR CODE HERE
+    Attributes:
+    ----------
+    name : str
+        The table name associated with teams.
+    """
+
     name = "team"
 
-    # Define a `names` method
-    # that receives no arguments
-    # This method should return
-    # a list of tuples from an sql execution
-    #### YOUR CODE HERE
     def names(self):
-        query = f"""
-            SELECT team_name, team_id
-            FROM {self.name}
         """
-        return self.query(query)
-        
-        # Query 5
-        # Write an SQL query that selects
-        # the team_name and team_id columns
-        # from the team table for all teams
-        # in the database
-        #### YOUR CODE HERE
-    
+        Retrieves a list of all teams with their names and IDs.
 
-    # Define a `username` method
-    # that receives an ID argument
-    # This method should return
-    # a list of tuples from an sql execution
-    #### YOUR CODE HERE
+        SQL Query:
+        ----------
+        SELECT team_name, team_id
+        FROM team;
+
+        Returns:
+        -------
+        list[tuple]
+            A list of tuples where each tuple contains:
+            - Team name (str)
+            - Team ID (int)
+        """
+        sql_query = """
+            SELECT 
+                team_name, 
+                team_id
+            FROM team;
+        """
+        return self.query(sql_query)
+
     def username(self, id):
-        query = f"""
-            SELECT team_name, team_id
-            FROM {self.name}
-            WHERE team_id = {id}
         """
-        return self.query(query)
-        # Query 6
-        # Write an SQL query
-        # that selects the team_name column
-        # Use f-string formatting and a WHERE filter
-        # to only return the team name related to
-        # the ID argument
-        #### YOUR CODE HERE
+        Retrieves the name of a team by its ID.
 
+        SQL Query:
+        ----------
+        SELECT team_name
+        FROM team
+        WHERE team_id = ?;
 
-    # Below is method with an SQL query
-    # This SQL query generates the data needed for
-    # the machine learning model.
-    # Without editing the query, alter this method
-    # so when it is called, a pandas dataframe
-    # is returns containing the execution of
-    # the sql query
-    #### YOUR CODE HERE
+        Parameters:
+        ----------
+        id : int
+            The team's ID.
+
+        Returns:
+        -------
+        list[tuple]
+            A list containing a single tuple with the team name.
+        """
+        if not isinstance(id, int):
+            raise ValueError(f"Expected an integer for ID, but got {type(id).__name__}")
+
+        sql_query = """
+            SELECT 
+                team_name
+            FROM team
+            WHERE team_id = ?;
+        """
+        return self.query(sql_query, [id])
+
     def model_data(self, id):
-        query_str = f"""
-            SELECT positive_events, negative_events FROM (
-                    SELECT employee_id
-                         , SUM(positive_events) positive_events
-                         , SUM(negative_events) negative_events
-                    FROM {self.name}
-                    JOIN employee_events
-                        USING({self.name}_id)
-                    WHERE {self.name}.{self.name}_id = {id}
-                    GROUP BY employee_id
-                   )
-                """
-        return self.pandas_query(query_str)
+        """
+        Retrieves model data for a given team.
+
+        SQL Query:
+        ----------
+        SELECT positive_events, negative_events
+        FROM (
+            SELECT employee_id,
+                   SUM(positive_events) AS positive_events,
+                   SUM(negative_events) AS negative_events
+            FROM team
+            JOIN employee_events
+            USING(team_id)
+            WHERE team.team_id = ?
+            GROUP BY employee_id
+        );
+
+        Parameters:
+        ----------
+        id : int
+            The team's ID.
+
+        Returns:
+        -------
+        pandas.DataFrame
+            A DataFrame containing:
+            - Positive events count
+            - Negative events count
+        """
+        if not isinstance(id, int):
+            raise ValueError(f"Expected an integer for ID, but got {type(id).__name__}")
+
+        sql_query = """
+            SELECT 
+                positive_events, 
+                negative_events 
+            FROM (
+                SELECT 
+                    employee_id,
+                    SUM(positive_events) AS positive_events,
+                    SUM(negative_events) AS negative_events
+                FROM team
+                JOIN employee_events
+                USING(team_id)
+                WHERE team.team_id = ?
+                GROUP BY employee_id
+            );
+        """
+        return self.pandas_query(sql_query, [id])
