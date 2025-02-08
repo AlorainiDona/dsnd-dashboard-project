@@ -1,5 +1,6 @@
 from fasthtml.common import H1, RedirectResponse, Div
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 import matplotlib.pyplot as plt
 
 # Import QueryBase, Employee, Team from employee_events
@@ -10,25 +11,14 @@ from employee_events.team import Team
 # Import the load_model function from the utils.py file
 from utils import load_model
 
-"""
-Below, we import the parent classes
-you will use for subclassing
-"""
-from base_components import (
-    Dropdown,
-    BaseComponent,
-    Radio,
-    MatplotlibViz,
-    DataTable
-)
-
+# Import base and combined components
+from base_components import Dropdown, BaseComponent, Radio, MatplotlibViz, DataTable
 from combined_components import FormGroup, CombinedComponent
 
 # Initialize FastAPI app
 app = FastAPI()
 
-# Create a subclass of base_components/dropdown
-# called `ReportDropdown`
+# Create a subclass of base_components/Dropdown
 class ReportDropdown(Dropdown):
     def build_component(self, entity_id, model):
         self.label = model.name
@@ -37,38 +27,32 @@ class ReportDropdown(Dropdown):
     def component_data(self, entity_id, model):
         return model.names()
 
-
 # Create a subclass of base_components/BaseComponent
-# called `Header`
 class Header(BaseComponent):
     def build_component(self, entity_id, model):
         return H1(model.name)
 
-
 # Create a subclass of base_components/MatplotlibViz
-# called `LineChart`
 class LineChart(MatplotlibViz):
     def visualization(self, entity_id, model):
         data = model.event_counts(entity_id)
-        
-        # Debugging print
-        print("DEBUG: data columns in LineChart", data.columns)
 
-        # Ensure correct column names
+        if data.empty:
+            print("WARNING: No event data available.")
+            return plt.figure()
+
         if "event_date" in data.columns:
             data.rename(columns={"event_date": "date"}, inplace=True)
 
-        data.fillna(0, inplace=True)
-
         if "date" not in data.columns:
-            print("WARNING: 'date' column is missing in the data!")
+            print("ERROR: 'date' column is missing in the data!")
             return plt.figure()
 
         data.set_index("date", inplace=True)
         data.sort_index(inplace=True)
         data = data.cumsum()
 
-        # Ensure column names are valid
+        # Ensure at least two columns exist
         if data.shape[1] >= 2:
             data.columns = ["Positive", "Negative"]
         else:
@@ -77,15 +61,13 @@ class LineChart(MatplotlibViz):
 
         fig, ax = plt.subplots()
         data.plot(ax=ax)
-        self.set_axis_styling(ax)  # Fixed unsupported keyword arguments
+        self.set_axis_styling(ax)
         ax.set_title("Event Trends")
         ax.set_xlabel("Date")
         ax.set_ylabel("Count")
         return fig
 
-
 # Create a subclass of base_components/MatplotlibViz
-# called `BarChart`
 class BarChart(MatplotlibViz):
     predictor = load_model()
 
@@ -98,7 +80,7 @@ class BarChart(MatplotlibViz):
 
         probas = self.predictor.predict_proba(data)
         pred = probas[:, 1].mean() if model.name == "team" else probas[0, 1]
-        
+
         fig, ax = plt.subplots()
         ax.barh([""], [pred])
         ax.set_xlim(0, 1)
@@ -106,32 +88,27 @@ class BarChart(MatplotlibViz):
         self.set_axis_styling(ax)
         return fig
 
-
 # Create a subclass of combined_components/CombinedComponent
-# called Visualizations       
 class Visualizations(CombinedComponent):
     children = [LineChart(), BarChart()]
     outer_div_type = Div(cls='grid')
 
-
 # Create a subclass of base_components/DataTable
-# called `NotesTable`
 class NotesTable(DataTable):
     def component_data(self, entity_id, model):
         return model.notes(entity_id)
 
-
 class DashboardFilters(FormGroup):
     id = "top-filters"
     action = "/update_data"
-    method="POST"
+    method = "POST"
 
     children = [
         Radio(
             values=["Employee", "Team"],
-            name='profile_type',
-            hx_get='/update_dropdown',
-            hx_target='#selector'
+            name="profile_type",
+            hx_get="/update_dropdown",
+            hx_target="#selector"
         ),
         ReportDropdown(
             id="selector",
@@ -139,47 +116,39 @@ class DashboardFilters(FormGroup):
         )
     ]
 
-
 # Create a subclass of CombinedComponents
-# called `Report`
 class Report(CombinedComponent):
     children = [Header(), DashboardFilters(), Visualizations(), NotesTable()]
-    outer_div_type = Div(cls='container')
-
+    outer_div_type = Div(cls="container")
 
 # Initialize the `Report` class
 report = Report()
 
-
-# Create a route for a get request
-# Set the route's path to the root
-@app.get("/")
+# Create routes that explicitly return HTMLResponse
+@app.get("/", response_class=HTMLResponse)
 def index():
-    return report(1, Employee())
+    content = report(1, Employee())
+    return HTMLResponse(content=content, status_code=200)
 
-
-# Create a route for a get request
-@app.get("/employee/{employee_id}")
+@app.get("/employee/{employee_id}", response_class=HTMLResponse)
 def employee(employee_id: str):
-    return report(employee_id, Employee())
+    content = report(employee_id, Employee())
+    return HTMLResponse(content=content, status_code=200)
 
-
-# Create a route for a get request
-@app.get("/team/{team_id}")
+@app.get("/team/{team_id}", response_class=HTMLResponse)
 def team(team_id: str):
-    return report(team_id, Team())
+    content = report(team_id, Team())
+    return HTMLResponse(content=content, status_code=200)
 
-
-# Keep the below code unchanged!
 @app.get("/update_dropdown")
 def update_dropdown(profile_type: str):
     dropdown = DashboardFilters.children[1]
-    print("PARAM", profile_type)
+    print("DEBUG: update_dropdown called with profile_type =", profile_type)
+
     if profile_type == "Team":
         return dropdown(None, Team())
     elif profile_type == "Employee":
         return dropdown(None, Employee())
-
 
 @app.post("/update_data")
 async def update_data(r):
@@ -191,7 +160,6 @@ async def update_data(r):
         return RedirectResponse(f"/employee/{entity_id}", status_code=303)
     elif profile_type == "Team":
         return RedirectResponse(f"/team/{entity_id}", status_code=303)
-
 
 # Start FastAPI server
 import uvicorn
