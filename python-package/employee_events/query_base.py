@@ -1,6 +1,5 @@
 # Import dependencies for SQL execution
 from employee_events.sql_execution import QueryMixin
-
 import pandas as pd
 
 # Define a class called QueryBase
@@ -8,7 +7,7 @@ import pandas as pd
 class QueryBase(QueryMixin):
 
     # Create a class attribute called `name`
-    # set the attribute to an empty string
+    # Set the attribute to an empty string
     name = ""
 
     # Define a `names` method that receives no arguments
@@ -21,7 +20,7 @@ class QueryBase(QueryMixin):
     def event_counts(self, id):
         """Returns event counts grouped by date"""
         query = f"""
-            SELECT event_date, 
+            SELECT event_date AS date, 
                    SUM(positive_events) AS positive_events, 
                    SUM(negative_events) AS negative_events
             FROM {self.name}
