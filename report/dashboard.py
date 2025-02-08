@@ -50,14 +50,17 @@ class Header(BaseComponent):
 class LineChart(MatplotlibViz):
     def visualization(self, entity_id, model):
         data = model.event_counts(entity_id)
+        print("DEBUG: data columns in LineChart", data.columns)  # Debugging line
         data.fillna(0, inplace=True)
+        if "event_date" in data.columns:
+            data.rename(columns={"event_date": "date"}, inplace=True)  # Ensure proper column name
         data.set_index("date", inplace=True)
         data.sort_index(inplace=True)
         data = data.cumsum()
         data.columns = ["Positive", "Negative"]
         fig, ax = plt.subplots()
         data.plot(ax=ax)
-        self.set_axis_styling(ax)  # ✅ Removed unsupported arguments
+        self.set_axis_styling(ax)  # Removed unsupported keyword arguments
         ax.set_title("Event Trends")
         ax.set_xlabel("Date")
         ax.set_ylabel("Count")
@@ -77,7 +80,7 @@ class BarChart(MatplotlibViz):
         ax.barh([""], [pred])
         ax.set_xlim(0, 1)
         ax.set_title("Predicted Recruitment Risk", fontsize=20)
-        self.set_axis_styling(ax)  # ✅ Removed unsupported arguments
+        self.set_axis_styling(ax)
         return fig
 
 
